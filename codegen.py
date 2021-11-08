@@ -111,36 +111,28 @@ def tables(o):
             o.p('.word', methods[i])
 
 def templates(o):
-    """
-    El template o prototipo para cada objeto (es decir, de donde new copia al instanciar)
-    1. Para cada clase generar un objeto, poner atención a:
-        - nombre
-        - tag
-        - tamanio [tag, tamanio, dispTab, atributos ... ] = ?
-            Es decir, el tamanio se calcula en base a los atributos + 3, por ejemplo 
-                Int tiene 1 atributo (el valor) por lo que su tamanio es 3+1
-                String tiene 2 atributos (el tamanio y el valor (el 0 al final)) por lo que su tamanio es 3+2
-        - dispTab
-        - atributos
-"""
-    # Ejemplo: nombre=Object, tag->0, tamanio=3, atributos=no tiene
-    o.accum += """
-    .word   -1 
-Object_protObj:
-    .word   0 
-    .word   3 
-    .word   Object_dispTab 
-"""
-    # Ejemplo: nombre=String, tag->4, tamanio=5, atributos=int ptr, 0
-    o.accum += """
-    .word   -1 
-String_protObj:
-    .word   4 
-    .word   5 
-    .word   String_dispTab 
-    .word   int_const0 
-    .word   0 
-"""
+    i = 0
+    for klass in _allClasses.values():
+        o.p(".word", "-1")
+        o.p("{}.protObj".format(klass.name))
+        o.p(".word", i) # TODO: Check if tag is incremental
+        
+        size = 3 + len(klass.attributes) 
+        o.p(".word", size)
+
+        o.p(".word", "{}_dispTab".format(klass.name))
+
+        if size>3:
+            # TODO: Check how these values are generated
+            for attrType in klass.attributes.values():
+                if attrType == "String":
+                    o.p(".word", "str_const{}".format(len(_allStrings)-1))
+                elif attrType == "Int":
+                    o.p(".word", "int_const0")
+                else:
+                    o.p(".word", "0")
+
+        i += 1
 
 def heap(o):
     o.accum += asm.heapStr
@@ -157,7 +149,7 @@ def genCode():
     global_data(o)
     constants(o)
     tables(o)
-    # templates(o)
+    templates(o)
     # heap(o)
     # global_text(o)
 

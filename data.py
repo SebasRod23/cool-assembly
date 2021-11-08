@@ -14,6 +14,9 @@ class DataListener(CoolListener):
             inherits = ctx.getChild(3).getText()
         self.klass = Klass(name=name, inherits=inherits)
     
+    def exitAtribute(self, ctx:CoolParser.AtributeContext):
+        self.klass.addAttribute(ctx.ID().getText(), ctx.TYPE().getText())
+    
     def enterMethod(self, ctx:CoolParser.MethodContext):
         self.params = []
     
@@ -27,14 +30,13 @@ class DataListener(CoolListener):
     def enterString(self, ctx:CoolParser.StringContext):
         s: str = ctx.STRING().getText()[1:-1]
 
-        if _allStrings and s not in _allStrings:
+        if s not in _allStrings:
             _allStrings.append(s)
     
     def enterInteger(self, ctx:CoolParser.IntegerContext):
         number =int(ctx.INTEGER().getText())
 
-        if not _allInts: _allInts.append(number)
-        elif number not in _allInts:
+        if number not in _allInts:
             _allInts.append(number)
     
     def exitProgram(self, ctx:CoolParser.ProgramContext):
