@@ -1,5 +1,6 @@
 from antlr.CoolListener import CoolListener
 from antlr.CoolParser import CoolParser
+from structure import _allStrings, _allClasses, _allInts
 from structure import *
 
 class DataListener(CoolListener):
@@ -14,5 +15,19 @@ class DataListener(CoolListener):
         self.klass = Klass(name=name, inherits=inherits)
 
     def enterString(self, ctx:CoolParser.StringContext):
-        # _allStrings.append()
-        print(ctx.STRING())
+        s: str = ctx.STRING().getText()[1:-1]
+
+        if _allStrings and s not in _allStrings:
+            _allStrings.append(s)
+    
+    def enterInteger(self, ctx:CoolParser.IntegerContext):
+        number =int(ctx.INTEGER().getText())
+
+        if not _allInts: _allInts.append(number)
+        elif number not in _allInts:
+            _allInts.append(number)
+    
+    def exitProgram(self, ctx:CoolParser.ProgramContext):
+        _allStrings.append('<basic_class>')
+        _allStrings.extend([ klass for klass in _allClasses.keys()])
+        _allStrings.append("")

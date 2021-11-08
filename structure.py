@@ -4,7 +4,7 @@ import unittest
 
 _allClasses = {}
 
-_allStrings = []
+_allStrings = ['--filename--']
 _allInts = []
 
 class HierarchyException(Exception):
@@ -44,7 +44,6 @@ class Klass():
         self.methods = SymbolTable()
         _allClasses[name] = self
         
-        _allStrings.append(name)
 
     def validHierarchy(self):
         up = self.inherits
@@ -304,7 +303,7 @@ def setBaseClasses():
     k.addMethod('substr', Method('String', [('i', 'Int'), ('l', 'Int')]))
     _allClasses['String'] = k
     k = Klass('Bool')
-    _allClasses['String'] = k
+    _allClasses['Bool'] = k
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

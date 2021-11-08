@@ -57,20 +57,20 @@ str_const$idx:
     .align  2
 """)
 
-boolStr = """
+boolStr = Template("""
     .word   -1
 bool_const0:
-    .word   3
+    .word   $tag
     .word   4
     .word   Bool_dispTab
     .word   0
     .word   -1
 bool_const1:
-    .word   3
+    .word   $tag
     .word   4
     .word   Bool_dispTab
     .word   1
-"""
+""")
 
 heapStr = """
    .globl  heap_start 

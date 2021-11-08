@@ -4,10 +4,14 @@ from antlr.CoolParser import *
 from antlr.CoolListener import *
 
 import sys
+import math
 from string import Template
 import asm
-from dataListener import DataListener
-from structure import _allClasses, setBaseClasses
+from data import DataListener
+from structure import _allStrings, _allInts, _allClasses
+from structure import *
+
+basicTags = dict(intTag=2, boolTag=3, stringTag=4)
 
 class Output:
     def __init__(self):
@@ -39,36 +43,33 @@ class Output:
         return self.accum
 
 def global_data(o):
-        k = dict(intTag=3, boolTag=4, stringTag=5) # TODO: Check dict values
-        o.accum = asm.gdStr1 + asm.gdTpl1.substitute(k) + asm.gdStr2
+        o.accum = asm.gdStr1 + asm.gdTpl1.substitute(basicTags) + asm.gdStr2
 
 def constants(o):
-    """
-    1. Determinar literales string
-        1.1 Obtener lista de literales (a cada una asignar un índice) + nombres de las clases
-        1.2 Determinar constantes numéricas necesarias
-        1.3 Reemplazar en el template:
-            - tag
-            - tamanio del objeto: [tag, tamanio, ptr al dispTab, ptr al int, (len(contenido)+1)%4] = ? 
-                (el +1 es por el 0 en que terminan siempre)
-            - índice del ptr al int
-            - valor (el string)
-    2. Determinar literales enteras
-        2.1 Literales necesarias en el punto 1
-        2.2 + constantes en el código fuente
-        2.3 Remplazar en el template:
-            - tag
-            - tamanio del objeto: [tag, tamanio, ptr al dispTab y contenido] = 4 words
-            - valor
-    """
-    # 1. "--filename--"", strings, "<basic_class>"", classes, empty string
-    literals = ["--filename--", '<basic_class>']
-    ### POR EJEMPLO (CAMBIAR)
-    o.accum += asm.cTplStr.substitute(idx=3, tag=2, size=23, sizeIdx=2, value='hola mundo')
-    o.accum += asm.cTplInt.substitute(idx=5, tag=12, value=340)
+    # Strings
+    # TODO: Check special case for empty string
+    for i in range(len(_allStrings)-1, -1, -1,):
+        # Obtener tamaño del string
+        strLen = len(_allStrings[i].replace("\\",""))
 
-    # Siempre incluir los bool
-    o.accum += asm.boolStr
+        # Obtener el tamaño del objeto 
+        size = int(4+math.ceil((strLen+1)/4))
+        
+        # Guardar el tamaño del string dentro de las constantes Integer si no existe 
+        if not strLen in _allInts:
+            _allInts.append(strLen)
+            index = len(_allInts)-1
+        else:
+            index = _allInts.index(strLen)
+
+        o.accum += asm.cTplStr.substitute(idx=i, tag=basicTags['stringTag'], size=size, sizeIdx=index, value=_allStrings[i])
+    
+    # Integers
+    for i in range(len(_allInts)-1, -1, -1,):
+        o.accum += asm.cTplInt.substitute(idx=i, tag=basicTags['intTag'], value=_allInts[i])
+
+    # Booleans
+    o.accum += asm.boolStr.substitute(tag=basicTags['boolTag'])
 
 def tables(o):
     """
