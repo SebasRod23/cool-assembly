@@ -4,7 +4,7 @@ import unittest
 
 _allClasses = {}
 
-_allStrings = ['--filename--']
+_allStrings = ['--filename--', '\\n']
 _allInts = [0]
 
 class HierarchyException(Exception):
@@ -298,6 +298,9 @@ def setBaseClasses():
     k = Klass('Int')
     k.addAttribute("value", "Object") # TODO: Check types of this attr
     _allClasses['Int'] = k
+    k = Klass('Bool')
+    k.addAttribute("value", "Object") # TODO: Check types of this attr
+    _allClasses['Bool'] = k
     k = Klass('String')
     k.addAttribute("size", "Int") # TODO: Check types of this attr
     k.addAttribute("value", "Object") # TODO: Check types of this attr
@@ -305,9 +308,7 @@ def setBaseClasses():
     k.addMethod('concat', Method('String', [('s', 'String')]))
     k.addMethod('substr', Method('String', [('i', 'Int'), ('l', 'Int')]))
     _allClasses['String'] = k
-    k = Klass('Bool')
-    k.addAttribute("value", "Object") # TODO: Check types of this attr
-    _allClasses['Bool'] = k
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

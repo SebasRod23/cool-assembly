@@ -150,8 +150,8 @@ def genCode():
     constants(o)
     tables(o)
     templates(o)
-    # heap(o)
-    # global_text(o)
+    heap(o)
+    global_text(o)
 
     # TODO: Aquí enviar a un archivo, etc.
     print(o.out())
