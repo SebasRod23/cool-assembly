@@ -13,6 +13,16 @@ class DataListener(CoolListener):
         if ctx.getChild(2).getText() == 'inherits':
             inherits = ctx.getChild(3).getText()
         self.klass = Klass(name=name, inherits=inherits)
+    
+    def enterMethod(self, ctx:CoolParser.MethodContext):
+        self.params = []
+    
+    def enterFormal(self, ctx:CoolParser.FormalContext):
+        self.params.append((ctx.ID().getText(), ctx.TYPE().getText()))
+    
+    def exitMethod(self, ctx:CoolParser.MethodContext):
+        method = Method(ctx.TYPE().getText(), self.params)
+        self.klass.addMethod(ctx.ID().getText(), method)
 
     def enterString(self, ctx:CoolParser.StringContext):
         s: str = ctx.STRING().getText()[1:-1]

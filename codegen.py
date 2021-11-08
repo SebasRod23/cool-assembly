@@ -72,29 +72,44 @@ def constants(o):
     o.accum += asm.boolStr.substitute(tag=basicTags['boolTag'])
 
 def tables(o):
-    """
-    1. class_nameTab: tabla para los nombres de las clases en string
-        1.1 Los objetos ya fueron generados arriba
-        1.2 El tag de cada clase indica el desplazamiento desde la etiqueta class_nameTab
-    2. class_objTab: prototipos (templates) y constructores para cada objeto
-        2.1 Indexada por tag: en 2*tag está el protObj, en 2*tag+1 el init
-    3. dispTab para cada clase
-        3.1 Listado de los métodos en cada clase considerando herencia
-"""
-    #Ejemplo (REEMPLAZAR):
-
-    o.p('class_nameTab')
-    o.p('.word', 'str_const3')
-
-    o.p('class_objTab')
-    o.p('.word', 'Object_protObj')
-    o.p('.word', 'Object_init') 
-
-    o.p('Object_dispTab')
-    o.p('.word', 'Object.abort')
-    o.p('.word', 'Object.type_name')
-    o.p('.word', 'Object.copy')
+    classStart = _allStrings.index('Object') # TODO: Check if Object is always the first object
     
+    # Class Name Table
+    o.p('class_nameTab')
+    for i in range(classStart, len(_allStrings)-1):
+        o.p('.word', 'str_const{}'.format(i))
+
+    # Class Object Table
+    o.p('class_objTab')
+    for klass in _allClasses:
+        o.p('.word', '{}_protObj'.format(klass))
+        o.p('.word', '{}_init'.format(klass)) 
+
+    # Object Dispatch Table
+    for klass in _allClasses.values():
+        o.p('{}_dispTab'.format(klass.name))
+
+        curr = klass.name
+        methods = []
+        currMethods = []
+
+        # Obtener todos los metodos de esta clase
+        for method in klass.methods:
+            currMethods = ["{}.{}".format(curr, method)] + currMethods
+        methods.extend(currMethods)
+        
+        # Obtener todos los metodos de las clases que hereda
+        while curr != "Object":
+            curr = _allClasses[curr].inherits
+            currMethods = []
+            for method in _allClasses[curr].methods:
+                currMethods = ["{}.{}".format(curr, method)] + currMethods
+            methods.extend(currMethods)
+        
+        # Agregar métodos
+        for i in range(len(methods)-1, -1, -1):
+            o.p('.word', methods[i])
+
 def templates(o):
     """
     El template o prototipo para cada objeto (es decir, de donde new copia al instanciar)
@@ -141,7 +156,7 @@ def genCode():
     o = Output()
     global_data(o)
     constants(o)
-    # tables(o)
+    tables(o)
     # templates(o)
     # heap(o)
     # global_text(o)
