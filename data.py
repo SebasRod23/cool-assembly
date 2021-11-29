@@ -4,8 +4,6 @@ from structure import _allStrings, _allClasses, _allInts
 from structure import *
 
 class DataListener(CoolListener):
-    # def __init__(self, klasses):
-        # self.klasses = klasses
     
     def enterKlass(self, ctx:CoolParser.KlassContext):
         name = ctx.getChild(1).getText()

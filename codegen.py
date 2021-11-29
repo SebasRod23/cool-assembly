@@ -10,6 +10,7 @@ import asm
 from data import DataListener
 from structure import _allStrings, _allInts, _allClasses
 from structure import *
+from text import TextListener
 
 basicTags = dict(intTag=2, boolTag=3, stringTag=4)
 
@@ -144,7 +145,7 @@ def class_inits(o):
     pass
 
 
-def genCode():
+def genCode(walker, tree):
     o = Output()
     global_data(o)
     constants(o)
@@ -152,9 +153,10 @@ def genCode():
     templates(o)
     heap(o)
     global_text(o)
+    
 
     # TODO: Aquí enviar a un archivo, etc.
-    print(o.out())
+    # print(o.out())
     
 if __name__ == '__main__':
     # Ejecutar como: "python codegen.py <filename>" donde filename es el nombre de alguna de las pruebas
@@ -167,10 +169,7 @@ if __name__ == '__main__':
     # que requiere el generador de código
     setBaseClasses()
     walker.walk(DataListener(), tree)
-    # for klass in _allClasses:
-        # print(_allClasses[klass].name, _allClasses[klass].inherits)
-    
-    #walker.walk(Listener2(), tree)
 
     # Pasar parámetros al generador de código 
-    genCode()
+    genCode(walker, tree)
+    walker.walk(TextListener({}), tree)
