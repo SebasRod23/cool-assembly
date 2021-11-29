@@ -1,13 +1,13 @@
 from antlr.CoolListener import CoolListener
 from antlr.CoolParser import CoolParser
 import asm
-from structure import _allStrings, _allClasses, _allInts, _allExpr
+from structure import _allStrings, _allClasses, _allInts, _methodsAsm
 from structure import *
 
 class TextListener(CoolListener):
-    def __init__(self, asms={}):
+    def __init__(self):
         self.labelN = 0
-        self.asms = asms
+        self.asms = {}
     
     def addLabel(self):
         self.labelN += 1
@@ -27,7 +27,7 @@ class TextListener(CoolListener):
         # TODO: Qué es formals y locals?
         expr += self.asms[ctx.expr()]
         expr += asm.methodTpl_out.substitute(ts=ts, fp=ts, s0=ts-4, ra=ts-8,formals=4,locals=ts,everything=ts+4)
-        print(expr)
+        _methodsAsm.append(expr)
     
     def enterObject(self, ctx:CoolParser.ObjectContext):
         # TODO: Como se obtiene el address?

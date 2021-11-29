@@ -4,15 +4,17 @@ from antlr.CoolParser import *
 from antlr.CoolListener import *
 
 import sys
+import pathlib
 import math
 from string import Template
 import asm
 from data import DataListener
-from structure import _allStrings, _allInts, _allClasses
+from structure import _allStrings, _allInts, _allClasses, _methodsAsm
 from structure import *
 from text import TextListener
 
 basicTags = dict(intTag=2, boolTag=3, stringTag=4)
+filename = "fact"
 
 class Output:
     def __init__(self):
@@ -154,14 +156,24 @@ def genCode(walker, tree):
     heap(o)
     global_text(o)
     
+    walker.walk(TextListener(), tree)
+    for methodAsm in _methodsAsm:
+        o.accum += methodAsm
 
     # TODO: Aquí enviar a un archivo, etc.
     # print(o.out())
+    folder_path = "./resources/codegen/output"
+    
+    pathlib.Path(folder_path).mkdir(parents=True, exist_ok=True) 
+
+    text_file = open(folder_path + "/%s.cl.s" % (filename), "w")
+    text_file.write(o.out())
+    text_file.close()
     
 if __name__ == '__main__':
     # Ejecutar como: "python codegen.py <filename>" donde filename es el nombre de alguna de las pruebas
     #parser = CoolParser(CommonTokenStream(CoolLexer(FileStream("../resources/codegen/input/%s.cool" % sys.argv[1]))))
-    parser = CoolParser(CommonTokenStream(CoolLexer(FileStream("./resources/codegen/input/%s.cool" % ("fact")))))
+    parser = CoolParser(CommonTokenStream(CoolLexer(FileStream("./resources/codegen/input/%s.cool" % (filename)))))
     walker = ParseTreeWalker()
     tree = parser.program()
 
@@ -172,4 +184,3 @@ if __name__ == '__main__':
 
     # Pasar parámetros al generador de código 
     genCode(walker, tree)
-    walker.walk(TextListener({}), tree)

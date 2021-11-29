@@ -6,7 +6,7 @@ _allClasses = {}
 
 _allStrings = ['--filename--', '\\n']
 _allInts = [0]
-_allExpr = []
+_methodsAsm = []
 
 class HierarchyException(Exception):
     pass

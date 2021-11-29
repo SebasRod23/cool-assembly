@@ -1,8 +1,7 @@
 from string import Template
 
 
-gdStr1 = """
-    .data
+gdStr1 = """    .data
     .align  2
     .globl  class_nameTab
     .globl  Main_protObj
