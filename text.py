@@ -46,6 +46,18 @@ class TextListener(CoolListener):
         expr = asm.litTpl.substitute(literal="int_const{}".format(literal), value=value)
         self.asms[ctx] = expr
         ctx.asm = expr
+    
+    def exitString(self, ctx:CoolParser.StringContext):
+        # Buscar literal
+        literal = -1
+        value = ctx.STRING().getText()[1:-1]
+        for i in range(len(_allStrings)):
+            if _allStrings[i] == value:
+                literal = i
+                break
+        expr = asm.litTpl.substitute(literal="str_const{}".format(literal), value=value)
+        self.asms[ctx] = expr
+        ctx.asm = expr
 
     def exitBase(self, ctx: CoolParser.BaseContext):
         # Tenemos que considerar que todos los Primary son Base
@@ -88,25 +100,24 @@ class TextListener(CoolListener):
         expr = asm.ifTpl.substitute(test_subexp=exprTest, true_subexp=exprTrue, false_subexp=exprFalse, label_false=ctx.label_false, label_exit=ctx.label_exit)
         self.asms[ctx] = expr
     
+    def enterCall(self, ctx:CoolParser.CallContext):
+        ctx.label = self.addLabel()
+
     def exitCall(self, ctx:CoolParser.CallContext):
-        # TODO: Borrar este if
-        if self.methodName != "fact": return
         expr = ""
         # TODO: Check wich call case is
         expr += asm.callParametersTpl.substitute(exp=self.asms[ctx.expr(0)])
-        expr += asm.callStr1
+        expr += asm.selfStr
         # TODO: Definir la linea de la llamada en el programa
         line = 7
-        expr += asm.callTpl1.substitute(fileName='str_const0', line=line, label=self.addLabel())
+        expr += asm.callTpl1.substitute(fileName='str_const0', line=line, label=ctx.label)
         # TODO: Cómo se obtiene off?
         off = 28
-        expr += asm.callTpl_instance.substitute(off=off, offset=off/4, method=ctx.ID().getText())
+        expr += asm.callTpl_instance.substitute(off=off, offset=off//4, method=ctx.ID().getText())
         self.asms[ctx] = expr
 
-    
-
-
-
     def exitBlock(self, ctx:CoolParser.BlockContext):
-        expr = "Block"
+        expr = ""
+        for e in ctx.expr():
+            expr += self.asms[e]
         self.asms[ctx] = expr

@@ -296,7 +296,7 @@ $exp
 # TODO: Checar los otros tipos de CallStr1
 # 1. metodo( params ... )
 callStr1 = """
-    move    $$a0    $$s0                    #call: get self into $$a0
+    move    $a0    $s0                    #call: get self into $a0
 """
 
 # 2. (object expr).metodo( params ... )
