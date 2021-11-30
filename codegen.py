@@ -9,12 +9,12 @@ import math
 from string import Template
 import asm
 from data import DataListener
-from structure import _allStrings, _allInts, _allClasses, _methodsAsm
+from structure import _allStrings, _allInts, _allClasses, _methodsAsm, _methodsOffsets
 from structure import *
 from text import TextListener
 
-basicTags = dict(intTag=2, boolTag=3, stringTag=4)
-filename = "fact"
+basicTags = dict(intTag=3, boolTag=4, stringTag=5)
+filename = "fibo"
 
 class Output:
     def __init__(self):
@@ -109,15 +109,18 @@ def tables(o):
                 currMethods = ["{}.{}".format(curr, method)] + currMethods
             methods.extend(currMethods)
         
+        offset = 0
         # Agregar métodos
         for i in range(len(methods)-1, -1, -1):
             o.p('.word', methods[i])
+            _methodsOffsets["{}.{}".format(klass.name, methods[i].split(".")[1])] = offset
+            offset += 1
 
 def templates(o):
     i = 0
     for klass in _allClasses.values():
         o.p(".word", "-1")
-        o.p("{}.protObj".format(klass.name))
+        o.p("{}_protObj".format(klass.name))
         o.p(".word", i) # TODO: Check if tag is incremental
         
         size = 3 + len(klass.attributes) 
@@ -144,8 +147,25 @@ def global_text(o):
     o.accum += asm.textStr
 
 def class_inits(o):
-    pass
-
+    for klass in _allClasses.values():
+        o.p("{}_init".format(klass.name))
+        o.accum += """    addiu	$sp $sp -12 
+    sw	$fp 12($sp) 
+    sw	$s0 8($sp) 
+    sw	$ra 4($sp) 
+    addiu	$fp $sp 4 
+    move	$s0 $a0
+"""
+        if klass.inherits != klass.name:
+            o.accum +='    jal {}_init\n'.format(klass.inherits)
+        
+        o.accum += """    move	$a0 $s0 
+    lw	$fp 12($sp) 
+    lw	$s0 8($sp) 
+    lw	$ra 4($sp) 
+    addiu	$sp $sp 12 
+    jr	$ra 
+"""
 
 def genCode(walker, tree):
     o = Output()
@@ -155,6 +175,7 @@ def genCode(walker, tree):
     templates(o)
     heap(o)
     global_text(o)
+    class_inits(o)
     
     walker.walk(TextListener(), tree)
     for methodAsm in _methodsAsm:

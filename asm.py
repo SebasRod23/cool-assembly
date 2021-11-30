@@ -124,7 +124,7 @@ methodTpl_out = Template("""
     lw      $$fp    ${ts}($$sp)         #outm: restore $$fp
     lw      $$s0    ${s0}($$sp)         #outm: restore $$s0 (self)
     lw      $$ra    ${ra}($$sp)         #outm: restore $$ra
-#outm: Clean everything! restore sp, $formals from formals, $locals from local frame
+#outm: Clean everything! restore sp, $formals from formals, $ts from local frame
     addiu   $$sp    $$sp    $everything
     jr      $$ra                        #outm: jump and make happy the callee
 """)
@@ -277,7 +277,7 @@ $right_subexp
     move    $$t2    $$a0                    #=:
         
     la      $$a0    bool_const1             #=: load true
-    beq     $$t1    $$t2                    #=: if identical (same address)
+    beq     $$t1    $$t2    $label          #=: if identical (same address)
         
     la      $$a1    bool_const0             #=: load false
     jal     equality_test                   #=: the runtime will know...

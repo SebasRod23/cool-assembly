@@ -3,6 +3,7 @@ import unittest
 
 
 _allClasses = {}
+_methodsOffsets = {}
 
 _allStrings = ['--filename--', '\\n']
 _allInts = [0]

@@ -1,12 +1,13 @@
 from antlr.CoolListener import CoolListener
 from antlr.CoolParser import CoolParser
 import asm
-from structure import _allStrings, _allClasses, _allInts, _methodsAsm
+from structure import _allStrings, _methodsOffsets, _allInts, _methodsAsm
 from structure import *
 
 class TextListener(CoolListener):
     def __init__(self):
         self.labelN = 0
+        self.formals = 0
         self.asms = {}
     
     def addLabel(self):
@@ -17,21 +18,27 @@ class TextListener(CoolListener):
         self.klass = ctx.getChild(1).getText()
 
     def enterMethod(self, ctx:CoolParser.MethodContext):
-        self.curr = ""
+        self.formals = 0
         self.methodName = ctx.ID().getText()
     
+    def enterFormal(self, ctx:CoolParser.FormalContext):
+        self.formals += 1
+    
     def exitMethod(self, ctx:CoolParser.MethodContext):
-        ts = (3+0)*4
+        nFormals = self.formals*4
+        # TODO: Obtner locals
+        nLocals = 0
+        ts = (3+nLocals)*4
         expr = ""
-        expr += asm.methodTpl_in.substitute(klass=self.klass, method=ctx.ID().getText(), ts=ts, fp=ts, s0=ts-4, ra=ts-8, locals=0 )
-        # TODO: Qué es formals y locals?
+        expr += asm.methodTpl_in.substitute(klass=self.klass, method=ctx.ID().getText(), ts=ts, fp=ts, s0=ts-4, ra=ts-8, locals=nLocals )
         expr += self.asms[ctx.expr()]
-        expr += asm.methodTpl_out.substitute(ts=ts, fp=ts, s0=ts-4, ra=ts-8,formals=4,locals=ts,everything=ts+4)
+        expr += asm.methodTpl_out.substitute(ts=ts, fp=ts, s0=ts-4, ra=ts-8,formals=nFormals,locals=nLocals,everything=nFormals+ts)
         _methodsAsm.append(expr)
     
-    def enterObject(self, ctx:CoolParser.ObjectContext):
+    def exitObject(self, ctx:CoolParser.ObjectContext):
         # TODO: Como se obtiene el address?
-        expr = asm.varTpl.substitute(address="{}($fp)".format(12), symbol=ctx.ID().getText(), klass=self.klass)
+        address = "{}($fp)".format(12)
+        expr = asm.varTpl.substitute(address=address, symbol=ctx.ID().getText(), klass=self.klass)
         self.asms[ctx] = expr
         ctx.asm = expr
 
@@ -79,6 +86,18 @@ class TextListener(CoolListener):
         expr = asm.arithTpl.substitute(left_subexp=exprLeft, right_subexp=exprRight, op="mul")
         self.asms[ctx] = expr
 
+    def exitDiv(self, ctx:CoolParser.DivContext):
+        exprLeft = self.asms[ctx.expr(0)]
+        exprRight = self.asms[ctx.expr(1)]
+        expr = asm.arithTpl.substitute(left_subexp=exprLeft, right_subexp=exprRight, op="div")
+        self.asms[ctx] = expr
+    
+    def exitAdd(self, ctx:CoolParser.AddContext):
+        exprLeft = self.asms[ctx.expr(0)]
+        exprRight = self.asms[ctx.expr(1)]
+        expr = asm.arithTpl.substitute(left_subexp=exprLeft, right_subexp=exprRight, op="add")
+        self.asms[ctx] = expr
+
     def exitSub(self, ctx:CoolParser.SubContext):
         exprLeft = self.asms[ctx.expr(0)]
         exprRight = self.asms[ctx.expr(1)]
@@ -101,18 +120,16 @@ class TextListener(CoolListener):
         self.asms[ctx] = expr
     
     def enterCall(self, ctx:CoolParser.CallContext):
-        ctx.label = self.addLabel()
+        ctx.label = self.addLabel()        
 
     def exitCall(self, ctx:CoolParser.CallContext):
         expr = ""
-        # TODO: Check wich call case is
+        # TODO: Checar el tipo de call
         expr += asm.callParametersTpl.substitute(exp=self.asms[ctx.expr(0)])
         expr += asm.selfStr
-        # TODO: Definir la linea de la llamada en el programa
-        line = 7
+        line = ctx.start.line
         expr += asm.callTpl1.substitute(fileName='str_const0', line=line, label=ctx.label)
-        # TODO: Cómo se obtiene off?
-        off = 28
+        off = _methodsOffsets["{}.{}".format(self.klass, ctx.ID().getText())] * 4
         expr += asm.callTpl_instance.substitute(off=off, offset=off//4, method=ctx.ID().getText())
         self.asms[ctx] = expr
 
